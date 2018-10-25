@@ -24,6 +24,7 @@ export class TimePickerCtrl {
   firstDayOfWeek: number;
   isOpen: boolean;
   isAbsolute: boolean;
+  startingTimeRange: any;
 
   /** @ngInject */
   constructor(private $scope, private $rootScope, private timeSrv) {
@@ -41,6 +42,7 @@ export class TimePickerCtrl {
     this.firstDayOfWeek = moment.localeData().firstDayOfWeek();
 
     // init time stuff
+    this.startingTimeRange = this.timeSrv.timeRange();
     this.onRefresh();
   }
 
@@ -145,13 +147,25 @@ export class TimePickerCtrl {
   }
 
   setRelativeFilter(timespan) {
-    const range = { from: timespan.from, to: timespan.to };
+    if (timespan.display === 'Reset') {
+      // set range to be equal to URL parameters when the page was opened.
+      let to, from;
+      to = this.startingTimeRange.to.valueOf();
+      from = this.startingTimeRange.from.valueOf();
+      this.timeSrv.setTime({ from: moment.utc(from), to: moment.utc(to) });
+    } else if (timespan.display === 'Most recent data') {
+      // set range to be the most recent data
+      //TODO: discover (in a datasource-independent way) the most recent data in the dashboard.
+    } else {
+      const range = { from: timespan.from, to: timespan.to };
 
-    if (this.panel.nowDelay && range.to === 'now') {
-      range.to = 'now-' + this.panel.nowDelay;
+      if (this.panel.nowDelay && range.to === 'now') {
+        range.to = 'now-' + this.panel.nowDelay;
+      }
+
+      this.timeSrv.setTime(range);
     }
 
-    this.timeSrv.setTime(range);
     this.closeDropdown();
   }
 }
