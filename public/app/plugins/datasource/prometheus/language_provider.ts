@@ -46,9 +46,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   labelKeys?: { [index: string]: string[] }; // metric -> [labelKey,...]
   labelValues?: { [index: string]: { [index: string]: string[] } }; // metric -> labelKey -> [labelValue,...]
   metrics?: string[];
-  logLabelOptions: any[];
-  supportsLogs?: boolean;
-  started: boolean;
+  startTask: Promise<any>;
 
   constructor(datasource: any, initialValues?: any) {
     super();
@@ -58,8 +56,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     this.labelKeys = {};
     this.labelValues = {};
     this.metrics = [];
-    this.supportsLogs = false;
-    this.started = false;
 
     Object.assign(this, initialValues);
   }
@@ -75,11 +71,10 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   };
 
   start = () => {
-    if (!this.started) {
-      this.started = true;
-      return Promise.all([this.fetchMetricNames(), this.fetchHistogramMetrics()]);
+    if (!this.startTask) {
+      this.startTask = this.fetchMetricNames().then(() => [this.fetchHistogramMetrics()]);
     }
-    return Promise.resolve([]);
+    return this.startTask;
   };
 
   // Keep this DOM-free for testing
@@ -159,33 +154,60 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   }
 
   getAggregationCompletionItems({ value }: TypeaheadInput): TypeaheadOutput {
-    let refresher: Promise<any> = null;
+    const refresher: Promise<any> = null;
     const suggestions: CompletionItemGroup[] = [];
 
-    // sum(foo{bar="1"}) by (|)
-    const line = value.anchorBlock.getText();
-    const cursorOffset: number = value.anchorOffset;
-    // sum(foo{bar="1"}) by (
-    const leftSide = line.slice(0, cursorOffset);
-    const openParensAggregationIndex = leftSide.lastIndexOf('(');
-    const openParensSelectorIndex = leftSide.slice(0, openParensAggregationIndex).lastIndexOf('(');
-    const closeParensSelectorIndex = leftSide.slice(openParensSelectorIndex).indexOf(')') + openParensSelectorIndex;
-    // foo{bar="1"}
-    const selectorString = leftSide.slice(openParensSelectorIndex + 1, closeParensSelectorIndex);
+    // Stitch all query lines together to support multi-line queries
+    let queryOffset;
+    const queryText = value.document.getBlocks().reduce((text, block) => {
+      const blockText = block.getText();
+      if (value.anchorBlock.key === block.key) {
+        // Newline characters are not accounted for but this is irrelevant
+        // for the purpose of extracting the selector string
+        queryOffset = value.anchorOffset + text.length;
+      }
+      text += blockText;
+      return text;
+    }, '');
+
+    // Try search for selector part on the left-hand side, such as `sum (m) by (l)`
+    const openParensAggregationIndex = queryText.lastIndexOf('(', queryOffset);
+    let openParensSelectorIndex = queryText.lastIndexOf('(', openParensAggregationIndex - 1);
+    let closeParensSelectorIndex = queryText.indexOf(')', openParensSelectorIndex);
+
+    // Try search for selector part of an alternate aggregation clause, such as `sum by (l) (m)`
+    if (openParensSelectorIndex === -1) {
+      const closeParensAggregationIndex = queryText.indexOf(')', queryOffset);
+      closeParensSelectorIndex = queryText.indexOf(')', closeParensAggregationIndex + 1);
+      openParensSelectorIndex = queryText.lastIndexOf('(', closeParensSelectorIndex);
+    }
+
+    const result = {
+      refresher,
+      suggestions,
+      context: 'context-aggregation',
+    };
+
+    // Suggestions are useless for alternative aggregation clauses without a selector in context
+    if (openParensSelectorIndex === -1) {
+      return result;
+    }
+
+    let selectorString = queryText.slice(openParensSelectorIndex + 1, closeParensSelectorIndex);
+
+    // Range vector syntax not accounted for by subsequent parse so discard it if present
+    selectorString = selectorString.replace(/\[[^\]]+\]$/, '');
+
     const selector = parseSelector(selectorString, selectorString.length - 2).selector;
 
     const labelKeys = this.labelKeys[selector];
     if (labelKeys) {
       suggestions.push({ label: 'Labels', items: labelKeys.map(wrapLabel) });
     } else {
-      refresher = this.fetchSeriesLabels(selector);
+      result.refresher = this.fetchSeriesLabels(selector);
     }
 
-    return {
-      refresher,
-      suggestions,
-      context: 'context-aggregation',
-    };
+    return result;
   }
 
   getLabelCompletionItems({ text, wrapperClasses, labelKey, value }: TypeaheadInput): TypeaheadOutput {
@@ -230,8 +252,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     }
 
     // Query labels for selector
-    // Temporarily add skip for logging
-    if (selector && !this.labelValues[selector] && !this.supportsLogs) {
+    if (selector && !this.labelValues[selector]) {
       if (selector === EMPTY_SELECTOR) {
         // Query label values for default labels
         refresher = Promise.all(DEFAULT_KEYS.map(key => this.fetchLabelValues(key)));
@@ -259,38 +280,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const histogramSeries = this.labelValues[HISTOGRAM_SELECTOR];
     if (histogramSeries && histogramSeries['__name__']) {
       this.histogramMetrics = histogramSeries['__name__'].slice().sort();
-    }
-  }
-
-  // Temporarily here while reusing this field for logging
-  async fetchLogLabels() {
-    const url = '/api/prom/label';
-    try {
-      const res = await this.request(url);
-      const body = await (res.data || res.json());
-      const labelKeys = body.data.slice().sort();
-      const labelKeysBySelector = {
-        ...this.labelKeys,
-        [EMPTY_SELECTOR]: labelKeys,
-      };
-      const labelValuesByKey = {};
-      this.logLabelOptions = [];
-      for (const key of labelKeys) {
-        const valuesUrl = `/api/prom/label/${key}/values`;
-        const res = await this.request(valuesUrl);
-        const body = await (res.data || res.json());
-        const values = body.data.slice().sort();
-        labelValuesByKey[key] = values;
-        this.logLabelOptions.push({
-          label: key,
-          value: key,
-          children: values.map(value => ({ label: value, value })),
-        });
-      }
-      this.labelValues = { [EMPTY_SELECTOR]: labelValuesByKey };
-      this.labelKeys = labelKeysBySelector;
-    } catch (e) {
-      console.error(e);
     }
   }
 
