@@ -4,6 +4,8 @@ import moment from 'moment';
 
 import * as rangeUtil from 'app/core/utils/rangeutil';
 
+//import { PanelEditor } from './PanelEditor';
+
 export class TimePickerCtrl {
   static tooltipFormat = 'MMM D, YYYY HH:mm:ss';
   static defaults = {
@@ -43,6 +45,15 @@ export class TimePickerCtrl {
 
     // init time stuff
     this.startingTimeRange = this.timeSrv.timeRange();
+
+    // todo: store the result of the query that gets the most recent time:
+
+    console.log(this.panel.most_recent_time_query);
+    console.log(this.panel.most_recent_time_query);
+    console.log(this.panel.most_recent_time_query);
+    console.log(this.panel.most_recent_time_query);
+    console.log(this.panel.most_recent_time_query);
+
     this.onRefresh();
   }
 
