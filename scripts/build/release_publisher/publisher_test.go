@@ -3,23 +3,24 @@ package main
 import "testing"
 
 func TestPreparingReleaseFromRemote(t *testing.T) {
+
+	var builder releaseBuilder
+
 	versionIn := "v5.2.0-beta1"
 	expectedVersion := "5.2.0-beta1"
 	whatsNewUrl := "https://whatsnews.foo/"
 	relNotesUrl := "https://relnotes.foo/"
 	expectedArch := "amd64"
 	expectedOs := "linux"
-	buildArtifacts := []buildArtifact{{expectedOs,expectedArch, ".linux-amd64.tar.gz"}}
-
-	var builder releaseBuilder
+	buildArtifacts := []buildArtifact{{expectedOs, expectedArch, ".linux-amd64.tar.gz"}}
 
 	builder = releaseFromExternalContent{
-		getter:     mockHttpGetter{},
-		rawVersion: versionIn,
+		getter:                 mockHttpGetter{},
+		rawVersion:             versionIn,
 		artifactConfigurations: buildArtifactConfigurations,
 	}
 
-	rel, _ := builder.prepareRelease("https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana", whatsNewUrl, relNotesUrl)
+	rel, _ := builder.prepareRelease("https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana", whatsNewUrl, relNotesUrl, false)
 
 	if !rel.Beta || rel.Stable {
 		t.Errorf("%s should have been tagged as beta (not stable), but wasn't	.", versionIn)
@@ -50,7 +51,6 @@ func (mockHttpGetter) getContents(url string) (string, error) {
 	return url, nil
 }
 
-
 func TestPreparingReleaseFromLocal(t *testing.T) {
 	whatsNewUrl := "https://whatsnews.foo/"
 	relNotesUrl := "https://relnotes.foo/"
@@ -60,11 +60,11 @@ func TestPreparingReleaseFromLocal(t *testing.T) {
 	var builder releaseBuilder
 	testDataPath := "testdata"
 	builder = releaseLocalSources{
-		path:                   testDataPath,
+		path: testDataPath,
 		artifactConfigurations: buildArtifactConfigurations,
 	}
 
-	relAll, _ := builder.prepareRelease("https://s3-us-west-2.amazonaws.com/grafana-enterprise-releases/master/grafana-enterprise", whatsNewUrl, relNotesUrl)
+	relAll, _ := builder.prepareRelease("https://s3-us-west-2.amazonaws.com/grafana-enterprise-releases/master/grafana-enterprise", whatsNewUrl, relNotesUrl, true)
 
 	if relAll.Stable || !relAll.Nightly {
 		t.Error("Expected a nightly release but wasn't.")
@@ -93,7 +93,7 @@ func TestPreparingReleaseFromLocal(t *testing.T) {
 	expectedOs := "win"
 
 	builder = releaseLocalSources{
-		path:                   testDataPath,
+		path: testDataPath,
 		artifactConfigurations: []buildArtifact{{
 			os:         expectedOs,
 			arch:       expectedArch,
@@ -101,7 +101,7 @@ func TestPreparingReleaseFromLocal(t *testing.T) {
 		}},
 	}
 
-	relOne, _ := builder.prepareRelease("https://s3-us-west-2.amazonaws.com/grafana-enterprise-releases/master/grafana-enterprise", whatsNewUrl, relNotesUrl)
+	relOne, _ := builder.prepareRelease("https://s3-us-west-2.amazonaws.com/grafana-enterprise-releases/master/grafana-enterprise", whatsNewUrl, relNotesUrl, true)
 
 	if len(relOne.Builds) != 1 {
 		t.Errorf("Expected 1 artifact, but was %v", len(relOne.Builds))
