@@ -22,5 +22,48 @@
 		<gf-form-switch class="gf-form" label="Hide time picker" checked="ctrl.panel.hidden" label-class="width-10"></gf-form-switch>
 
 		<gf-form-switch class="gf-form" label="Load most recent data" checked="ctrl.panel.hidden" label-class="width-10"></gf-form-switch>
+
+		<div class="gf-form">
+			<label class="gf-form-label width-10">Query for most recent time</label>
+			<input type="text" class="gf-form-input width-30" ng-model='ctrl.panel.most_recent_time_query' bs-tooltip="'Enter a query that retrieves the most recent data for this dashboard'""></input>
+		</div>
+	
+<!--
+		<div class="gf-form-group">
+			<div class="gf-form-inline">
+			  	<div class="gf-form">
+					<label class="gf-form-label">Data Source</label>
+					<gf-form-dropdown model="ctrl.panelDsValue" css-class="gf-size-auto" lookup-text="true" get-options="ctrl.getOptions(true)" on-change="ctrl.datasourceChanged($option)">
+						<input type="text" data-provide="typeahead" class="gf-form-input" spellcheck="false" style="display:none">
+				
+						<a ng-class="ctrl.cssClasses" tabindex="1" ng-click="ctrl.open()" give-focus="ctrl.focus" ng-bind-html="ctrl.display || '&nbsp;'" class="gf-form-input gf-form-input--dropdown gf-size-auto">DRE 6-Month Log Snapshot</a>
+					</gf-form-dropdown>
+				</div>
+		  
+				<div class="gf-form gf-form--grow">
+					<label class="gf-form-label gf-form-label--grow"></label>
+				</div>
+
+				<div class="gf-form" ng-if="ctrl.queryOptions">
+					<a class="gf-form-label" ng-click="ctrl.toggleOptions()">
+						<i class="fa fa-fw fa-caret-right" ng-hide="ctrl.optionsOpen"></i><i class="fa fa-fw fa-caret-down ng-hide" ng-show="ctrl.optionsOpen"></i>Options
+					</a>
+				</div>
+
+				<div class="gf-form">
+					<button class="gf-form-label" ng-click="ctrl.toggleQueryTroubleshooter()" bs-tooltip="'Display query request &amp; response'" data-original-title="" title="">
+						<i class="fa fa-fw fa-caret-right" ng-hide="ctrl.queryTroubleshooterOpen"></i><i class="fa fa-fw fa-caret-down ng-hide" ng-show="ctrl.queryTroubleshooterOpen"></i>Query Inspector
+					</button>
+				</div>
+			</div>
+			<div>
+
+				<query-troubleshooter panel-ctrl="ctrl.panelCtrl" is-open="ctrl.queryTroubleshooterOpen">
+
+				</query-troubleshooter>
+			</div>
+		</div>
+
+	-->
 	</div>
 </div>
