@@ -46,13 +46,15 @@ export class TimePickerCtrl {
     // init time stuff
     this.startingTimeRange = this.timeSrv.timeRange();
 
-    // todo: store the result of the query that gets the most recent time:
+    // TODO: store the result of the query that gets the most recent time:
 
     console.log(this.panel.most_recent_time_query);
     console.log(this.panel.most_recent_time_query);
     console.log(this.panel.most_recent_time_query);
     console.log(this.panel.most_recent_time_query);
     console.log(this.panel.most_recent_time_query);
+
+    console.log($scope.ctrl);
 
     this.onRefresh();
   }
