@@ -20,9 +20,9 @@
 
 		<gf-form-switch class="gf-form" label="Hide time picker" checked="ctrl.panel.hidden" label-class="width-10"></gf-form-switch>
 
-		<gf-form-switch class="gf-form" label="Load most recent data" checked="ctrl.panel.hidden" label-class="width-10"></gf-form-switch>
+		<gf-form-switch class="gf-form" label="Load most recent data" checked="ctrl.panel.hidden" label-class="width-10" ng-model="ctrl.query_most_recent_data"></gf-form-switch>
 
-		<div class="gf-form">
+		<div class="gf-form" ng-show="ctrl.query_most_recent_data">
 			<label class="gf-form-label width-10">Query for most recent time</label>
 			<input type="text" class="gf-form-input width-30" ng-model='ctrl.panel.most_recent_time_query' bs-tooltip="'Enter a query that retrieves the most recent data for this dashboard'"></input>
 		</div>
