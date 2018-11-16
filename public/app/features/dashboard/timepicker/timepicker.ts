@@ -98,6 +98,56 @@ export class TimePickerCtrl {
     this.$scope.ctrl.panel.storedQuery = this.$scope.ctrl.storedQuery;
 
     console.log(this.$scope.ctrl);
+
+    /*
+
+            timezone: 'browser',
+        panelId: panelId,
+        dashboardId: dashboardId,
+        range: timeRange,
+        rangeRaw: timeRange.raw,
+        interval: '1s',
+        intervalMs: 60000,
+        targets: queries,
+        maxDataPoints: 500,
+        scopedVars: {},
+        cacheTimeout: null,
+        */
+
+    // https://github.com/grafana/grafana/blob/master/docs/sources/plugins/developing/datasources.md
+
+    const rangeRaw = {
+      from: 'now-6h',
+      to: 'now',
+    };
+
+    const range = {
+      from: '2016-10-31T06:33:44.866Z',
+      to: '2045-10-31T12:33:44.866Z',
+      raw: rangeRaw,
+    };
+
+    const metricsQuery = {
+      timezone: this.dashboard.getTimezone(),
+      panelId: this.panel.id,
+      dashboardId: this.$scope.ctrl.dashboard.id,
+      range: range,
+      rangeRaw: range.raw,
+      interval: '1s',
+      intervalMs: 60000,
+      targets: [this.currentDatasource.queryModel.target],
+      //targets: this.panel.targets,
+      maxDataPoints: 500,
+      scopedVars: {},
+      cacheTimeout: null,
+      format: 'json',
+    };
+
+    console.log(metricsQuery);
+
+    this.$scope.ctrl.panel.mostRecentDataTime = this.$scope.ctrl.currentDatasource.query(metricsQuery);
+
+    console.log(this.$scope.ctrl.panel.mostRecentDataTime);
   }
 
   datasourceChanged() {
