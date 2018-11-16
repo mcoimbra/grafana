@@ -28,8 +28,25 @@ export class TimePickerCtrl {
   isAbsolute: boolean;
   startingTimeRange: any;
 
+  queryTroubleshooterOpen: boolean;
+  helpOpen: boolean;
+  optionsOpen: boolean;
+
+  currentAnnotation: any;
+  currentDatasource: any;
+  datasources: any;
+
+  annotationDefaults: any = {
+    name: '',
+    datasource: null,
+    iconColor: 'rgba(255, 96, 96, 1)',
+    enable: true,
+    showIn: 0,
+    hide: false,
+  };
+
   /** @ngInject */
-  constructor(private $scope, private $rootScope, private timeSrv) {
+  constructor(private $scope, private $rootScope, private datasourceSrv, private timeSrv) {
     this.$scope.ctrl = this;
 
     $rootScope.onAppEvent('shift-time-forward', () => this.move(1), $scope);
@@ -44,19 +61,43 @@ export class TimePickerCtrl {
     this.firstDayOfWeek = moment.localeData().firstDayOfWeek();
 
     // init time stuff
-    this.startingTimeRange = this.timeSrv.timeRange();
+    this.$scope.startingTimeRange = this.timeSrv.timeRange();
 
+    this.datasources = this.datasourceSrv.getAnnotationSources();
+
+    this.currentAnnotation = angular.copy(this.annotationDefaults);
+    //this.currentAnnotation.datasource = this.datasources[0].name;
+
+    this.currentAnnotation.datasource = this.$scope.ctrl.panel.datasourceName;
+    //this.currentAnnotation.datasource = this.currentDatasource.name;
     // TODO: store the result of the query that gets the most recent time:
-
-    console.log(this.panel.most_recent_time_query);
-    console.log(this.panel.most_recent_time_query);
-    console.log(this.panel.most_recent_time_query);
-    console.log(this.panel.most_recent_time_query);
-    console.log(this.panel.most_recent_time_query);
-
     console.log($scope.ctrl);
 
     this.onRefresh();
+
+    this.datasourceChanged();
+  }
+
+  datasourceChanged() {
+    return this.datasourceSrv.get(this.currentAnnotation.datasource).then(ds => {
+      //this.currentDatasource = ds;
+      this.$scope.ctrl.currentDatasource = ds;
+      //console.log();
+      this.$scope.ctrl.datasourceName = ds.name;
+      console.log(this.$scope.ctrl);
+    });
+  }
+
+  toggleOptions() {
+    this.helpOpen = false;
+    this.queryTroubleshooterOpen = false;
+    this.optionsOpen = !this.optionsOpen;
+  }
+
+  toggleQueryTroubleshooter() {
+    this.helpOpen = false;
+    this.optionsOpen = false;
+    this.queryTroubleshooterOpen = !this.queryTroubleshooterOpen;
   }
 
   onRefresh() {
