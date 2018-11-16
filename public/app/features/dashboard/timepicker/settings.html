@@ -50,21 +50,28 @@
 							<i class="fa fa-fw fa-caret-right" ng-hide="ctrl.queryTroubleshooterOpen"></i><i class="fa fa-fw fa-caret-down ng-hide" ng-show="ctrl.queryTroubleshooterOpen"></i>Query Inspector
 						</button>
 					</div>
+				</div>
 
-					<h5 class="section-heading">Query</h5>
-					<rebuild-on-change property="ctrl.panel.datasource" show-null="true"></rebuild-on-change>
-					<plugin-component type="query-ctrl">
-							<div ng-transclude class="gf-form-query-content" ng-if="!ctrl.collapsed">
-								<div ng-if="ctrl.target.rawQuery">
-									<div class="gf-form-inline">
-										<div class="gf-form gf-form--grow">
-										<code-editor content="ctrl.target.rawSql" datasource="ctrl.datasource" on-change="ctrl.panelCtrl.refresh()" data-mode="sql">
-										</code-editor>
+				<div>
+					<div class="gf-form">
+						<div style="width: 500px; height: 200px; display: inline-block;">
+							<rebuild-on-change property="ctrl.panel.datasource" show-null="true"></rebuild-on-change>
+							<plugin-component ng-model="ctrl.rawSql" type="query-ctrl" style="height:inherit; width:inherit;">
+									<!-- <div ng-transclude class="gf-form-query-content">-->
+									<div style="height:inherit; width:inherit;" class="gf-form-query-content">
+										<div style="height:inherit; width:inherit;" class="gf-form-inline">
+											<div style="height:inherit; width:inherit;" class="gf-form gf-form--grow">
+											<code-editor style="height:inherit; width:inherit;" content="ctrl.rawSql" datasource="ctrl.currentDatasource" data-mode="sql" >
+											</code-editor>
+											</div>
 										</div>
 									</div>
-								</div>
-							</div>
-					</plugin-component>
+							</plugin-component>
+							<input id="tempHoldingInput" ng-model="ctrl.storedQuery">
+							<button class="gf-form-label" ng-click="ctrl.saveTimeCheckQuery()" title="">Save Query
+							</button>
+						</div>
+					</div>
 				</div>
 				
 

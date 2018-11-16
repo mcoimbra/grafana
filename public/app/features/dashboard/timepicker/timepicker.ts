@@ -2,6 +2,8 @@ import _ from 'lodash';
 import angular from 'angular';
 import moment from 'moment';
 
+import $ from 'jquery';
+
 import * as rangeUtil from 'app/core/utils/rangeutil';
 
 //import { PanelEditor } from './PanelEditor';
@@ -35,6 +37,9 @@ export class TimePickerCtrl {
   currentAnnotation: any;
   currentDatasource: any;
   datasources: any;
+  rawSql: any;
+
+  //storedQuery: any;
 
   annotationDefaults: any = {
     name: '',
@@ -71,18 +76,33 @@ export class TimePickerCtrl {
     this.currentAnnotation.datasource = this.$scope.ctrl.panel.datasourceName;
     //this.currentAnnotation.datasource = this.currentDatasource.name;
     // TODO: store the result of the query that gets the most recent time:
-    console.log($scope.ctrl);
 
     this.onRefresh();
 
     this.datasourceChanged();
+
+    this.$scope.ctrl.rawSql = this.$scope.ctrl.storedQuery;
+
+    $('code-editor .ace_content .ace_identifier').text(this.$scope.ctrl.panel.storedQuery);
+
+    console.log('CURRENT SQL: ' + this.$scope.ctrl.storedQuery);
+  }
+
+  saveTimeCheckQuery() {
+    this.$scope.ctrl.rawSql = $('code-editor .ace_content .ace_text-layer')
+      .children()
+      .eq(0)
+      .text();
+    this.$scope.ctrl.storedQuery = this.$scope.ctrl.rawSql;
+
+    this.$scope.ctrl.panel.storedQuery = this.$scope.ctrl.storedQuery;
+
+    console.log(this.$scope.ctrl);
   }
 
   datasourceChanged() {
     return this.datasourceSrv.get(this.currentAnnotation.datasource).then(ds => {
-      //this.currentDatasource = ds;
       this.$scope.ctrl.currentDatasource = ds;
-      //console.log();
       this.$scope.ctrl.datasourceName = ds.name;
       console.log(this.$scope.ctrl);
     });
