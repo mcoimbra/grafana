@@ -128,17 +128,19 @@ export class TimePickerCtrl {
     };
 
     const metricsQuery = {
-      timezone: this.dashboard.getTimezone(),
-      panelId: this.panel.id,
-      dashboardId: this.$scope.ctrl.dashboard.id,
+      //timezone: this.dashboard.getTimezone(),
+      //panelId: this.panel.id,
+      //dashboardId: this.$scope.ctrl.dashboard.id,
       range: range,
       rangeRaw: range.raw,
-      interval: '1s',
-      intervalMs: 60000,
-      targets: [this.currentDatasource.queryModel.target],
-      //targets: this.panel.targets,
-      maxDataPoints: 500,
-      scopedVars: {},
+      interval: '5s',
+      //intervalMs: 60000,
+      //{ "refId": "B", "target": "upper_75" }
+      //targets:
+      //targets: [this.currentDatasource.queryModel.target],
+
+      maxDataPoints: 2495,
+      //scopedVars: {},
       cacheTimeout: null,
       format: 'json',
     };
