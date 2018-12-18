@@ -24,7 +24,7 @@ function StatsRow({ active, count, proportion, value }: LogsLabelStat) {
 }
 
 const STATS_ROW_LIMIT = 5;
-class Stats extends PureComponent<{
+export class Stats extends PureComponent<{
   stats: LogsLabelStat[];
   label: string;
   value: string;
@@ -48,22 +48,28 @@ class Stats extends PureComponent<{
     const otherProportion = otherCount / total;
 
     return (
-      <>
-        <div className="logs-stats__info">
-          {label}: {total} of {rowCount} rows have that label
-          <span className="logs-stats__icon fa fa-window-close" onClick={onClickClose} />
+      <div className="logs-stats">
+        <div className="logs-stats__header">
+          <span className="logs-stats__title">
+            {label}: {total} of {rowCount} rows have that label
+          </span>
+          <span className="logs-stats__close fa fa-remove" onClick={onClickClose} />
         </div>
-        {topRows.map(stat => <StatsRow key={stat.value} {...stat} active={stat.value === value} />)}
-        {insertActiveRow && <StatsRow key={activeRow.value} {...activeRow} active />}
-        {otherCount > 0 && <StatsRow key="__OTHERS__" count={otherCount} value="Other" proportion={otherProportion} />}
-      </>
+        <div className="logs-stats__body">
+          {topRows.map(stat => <StatsRow key={stat.value} {...stat} active={stat.value === value} />)}
+          {insertActiveRow && activeRow && <StatsRow key={activeRow.value} {...activeRow} active />}
+          {otherCount > 0 && (
+            <StatsRow key="__OTHERS__" count={otherCount} value="Other" proportion={otherProportion} />
+          )}
+        </div>
+      </div>
     );
   }
 }
 
 class Label extends PureComponent<
   {
-    allRows?: LogRow[];
+    getRows?: () => LogRow[];
     label: string;
     plain?: boolean;
     value: string;
@@ -92,13 +98,14 @@ class Label extends PureComponent<
       if (state.showStats) {
         return { showStats: false, stats: null };
       }
-      const stats = calculateLogsLabelStats(this.props.allRows, this.props.label);
+      const allRows = this.props.getRows();
+      const stats = calculateLogsLabelStats(allRows, this.props.label);
       return { showStats: true, stats };
     });
   };
 
   render() {
-    const { allRows, label, plain, value } = this.props;
+    const { getRows, label, plain, value } = this.props;
     const { showStats, stats } = this.state;
     const tooltip = `${label}: ${value}`;
     return (
@@ -109,12 +116,12 @@ class Label extends PureComponent<
         {!plain && (
           <span title="Filter for label" onClick={this.onClickLabel} className="logs-label__icon fa fa-search-plus" />
         )}
-        {!plain && allRows && <span onClick={this.onClickStats} className="logs-label__icon fa fa-signal" />}
+        {!plain && getRows && <span onClick={this.onClickStats} className="logs-label__icon fa fa-signal" />}
         {showStats && (
           <span className="logs-label__stats">
             <Stats
               stats={stats}
-              rowCount={allRows.length}
+              rowCount={getRows().length}
               label={label}
               value={value}
               onClickClose={this.onClickClose}
@@ -127,15 +134,15 @@ class Label extends PureComponent<
 }
 
 export default class LogLabels extends PureComponent<{
-  allRows?: LogRow[];
+  getRows?: () => LogRow[];
   labels: LogsStreamLabels;
   plain?: boolean;
   onClickLabel?: (label: string, value: string) => void;
 }> {
   render() {
-    const { allRows, labels, onClickLabel, plain } = this.props;
+    const { getRows, labels, onClickLabel, plain } = this.props;
     return Object.keys(labels).map(key => (
-      <Label key={key} allRows={allRows} label={key} value={labels[key]} plain={plain} onClickLabel={onClickLabel} />
+      <Label key={key} getRows={getRows} label={key} value={labels[key]} plain={plain} onClickLabel={onClickLabel} />
     ));
   }
 }
