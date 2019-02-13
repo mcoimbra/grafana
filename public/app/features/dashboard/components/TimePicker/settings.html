@@ -15,10 +15,75 @@
 		</div>
 		<div class="gf-form">
 			<span class="gf-form-label width-10">Now delay now-</span>
-			<input type="text" class="gf-form-input max-width-25" ng-model="ctrl.panel.nowDelay" placeholder="0m" valid-time-span bs-tooltip="'Enter 1m to ignore the last minute (because it can contain incomplete metrics)'"
-																																																												 data-placement="right">
+			<input type="text" class="gf-form-input max-width-25" ng-model="ctrl.panel.nowDelay" placeholder="0m" valid-time-span bs-tooltip="'Enter 1m to ignore the last minute (because it can contain incomplete metrics)'" data-placement="right">
 		</div>
 
 		<gf-form-switch class="gf-form" label="Hide time picker" checked="ctrl.panel.hidden" label-class="width-10"></gf-form-switch>
+
+		<gf-form-switch class="gf-form" label="Load most recent data" checked="ctrl.panel.query_most_recent_data" label-class="width-10" ng-model="ctrl.panel.query_most_recent_data"></gf-form-switch>
+
+		<div class="gf-form" ng-show="ctrl.panel.query_most_recent_data">
+			<label class="gf-form-label width-10">Query for most recent time</label>
+			<!-- <input type="text" class="gf-form-input width-30" ng-model='ctrl.panel.most_recent_time_query' bs-tooltip="'Enter a query that retrieves the most recent data for this dashboard'"></input> -->
+
+			<div class="gf-form-group">
+				<div class="gf-form-inline">
+					<div class="gf-form">
+						<span class="gf-form-label width-7">Data source</span>
+						<div class="gf-form-select-wrapper">
+							<select class="gf-form-input" ng-model="ctrl.panel.datasourceName" ng-options="f.name as f.name for f in ctrl.datasources" ng-change="ctrl.datasourceChanged()"></select>
+						</div>
+					</div>
+			  
+					<div class="gf-form gf-form--grow">
+						<label class="gf-form-label gf-form-label--grow"></label>
+					</div>
+	
+					<div class="gf-form" ng-if="ctrl.queryOptions">
+						<a class="gf-form-label" ng-click="ctrl.toggleOptions()">
+							<i class="fa fa-fw fa-caret-right" ng-hide="ctrl.optionsOpen"></i><i class="fa fa-fw fa-caret-down ng-hide" ng-show="ctrl.optionsOpen"></i>Options
+						</a>
+					</div>
+	
+					<div class="gf-form">
+						<button class="gf-form-label" ng-click="ctrl.toggleQueryTroubleshooter()" bs-tooltip="'Display query request &amp; response'" data-original-title="" title="">
+							<i class="fa fa-fw fa-caret-right" ng-hide="ctrl.queryTroubleshooterOpen"></i><i class="fa fa-fw fa-caret-down ng-hide" ng-show="ctrl.queryTroubleshooterOpen"></i>Query Inspector
+						</button>
+					</div>
+				</div>
+
+				<div>
+					<div class="gf-form">
+						<div style="width: 500px; height: 200px; display: inline-block;">
+							<rebuild-on-change property="ctrl.panel.datasource" show-null="true"></rebuild-on-change>
+							<plugin-component ng-model="ctrl.rawSql" type="query-ctrl" style="height:inherit; width:inherit;">
+									<!-- <div ng-transclude class="gf-form-query-content">-->
+									<div style="height:inherit; width:inherit;" class="gf-form-query-content">
+										<div style="height:inherit; width:inherit;" class="gf-form-inline">
+											<div style="height:inherit; width:inherit;" class="gf-form gf-form--grow">
+											<code-editor style="height:inherit; width:inherit;" content="ctrl.rawSql" datasource="ctrl.currentDatasource" data-mode="sql" >
+											</code-editor>
+											</div>
+										</div>
+									</div>
+							</plugin-component>
+							<input id="tempHoldingInput" ng-model="ctrl.storedQuery">
+							<button class="gf-form-label" ng-click="ctrl.saveTimeCheckQuery()" title="">Save Query
+							</button>
+						</div>
+					</div>
+				</div>
+				
+
+
+				<!--
+				<div>
+	
+					<query-troubleshooter panel-ctrl="ctrl.panelCtrl" is-open="ctrl.queryTroubleshooterOpen">
+	
+					</query-troubleshooter>
+				</div> -->
+			</div>
+		</div>
 	</div>
 </div>

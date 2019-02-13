@@ -2,7 +2,11 @@ import _ from 'lodash';
 import angular from 'angular';
 import moment from 'moment';
 
+import $ from 'jquery';
+
 import * as rangeUtil from 'app/core/utils/rangeutil';
+
+//import { PanelEditor } from './PanelEditor';
 
 export class TimePickerCtrl {
   static tooltipFormat = 'MMM D, YYYY HH:mm:ss';
@@ -24,9 +28,30 @@ export class TimePickerCtrl {
   firstDayOfWeek: number;
   isOpen: boolean;
   isAbsolute: boolean;
+  startingTimeRange: any;
+
+  queryTroubleshooterOpen: boolean;
+  helpOpen: boolean;
+  optionsOpen: boolean;
+
+  currentAnnotation: any;
+  currentDatasource: any;
+  datasources: any;
+  rawSql: any;
+
+  //storedQuery: any;
+
+  annotationDefaults: any = {
+    name: '',
+    datasource: null,
+    iconColor: 'rgba(255, 96, 96, 1)',
+    enable: true,
+    showIn: 0,
+    hide: false,
+  };
 
   /** @ngInject */
-  constructor(private $scope, private $rootScope, private timeSrv) {
+  constructor(private $scope, private $rootScope, private datasourceSrv, private timeSrv) {
     this.$scope.ctrl = this;
 
     $rootScope.onAppEvent('shift-time-forward', () => this.move(1), $scope);
@@ -41,7 +66,110 @@ export class TimePickerCtrl {
     this.firstDayOfWeek = moment.localeData().firstDayOfWeek();
 
     // init time stuff
+    this.$scope.startingTimeRange = this.timeSrv.timeRange();
+
+    this.datasources = this.datasourceSrv.getAnnotationSources();
+
+    this.currentAnnotation = angular.copy(this.annotationDefaults);
+    //this.currentAnnotation.datasource = this.datasources[0].name;
+
+    this.currentAnnotation.datasource = this.$scope.ctrl.panel.datasourceName;
+    //this.currentAnnotation.datasource = this.currentDatasource.name;
+    // TODO: store the result of the query that gets the most recent time:
+
     this.onRefresh();
+
+    this.datasourceChanged();
+
+    this.$scope.ctrl.rawSql = this.$scope.ctrl.storedQuery;
+
+    $('code-editor .ace_content .ace_identifier').text(this.$scope.ctrl.panel.storedQuery);
+
+    console.log('CURRENT SQL: ' + this.$scope.ctrl.storedQuery);
+  }
+
+  saveTimeCheckQuery() {
+    this.$scope.ctrl.rawSql = $('code-editor .ace_content .ace_text-layer')
+      .children()
+      .eq(0)
+      .text();
+    this.$scope.ctrl.storedQuery = this.$scope.ctrl.rawSql;
+
+    this.$scope.ctrl.panel.storedQuery = this.$scope.ctrl.storedQuery;
+
+    console.log(this.$scope.ctrl);
+
+    /*
+
+            timezone: 'browser',
+        panelId: panelId,
+        dashboardId: dashboardId,
+        range: timeRange,
+        rangeRaw: timeRange.raw,
+        interval: '1s',
+        intervalMs: 60000,
+        targets: queries,
+        maxDataPoints: 500,
+        scopedVars: {},
+        cacheTimeout: null,
+        */
+
+    // https://github.com/grafana/grafana/blob/master/docs/sources/plugins/developing/datasources.md
+
+    const rangeRaw = {
+      from: 'now-6h',
+      to: 'now',
+    };
+
+    const range = {
+      from: '2016-10-31T06:33:44.866Z',
+      to: '2045-10-31T12:33:44.866Z',
+      raw: rangeRaw,
+    };
+
+    const metricsQuery = {
+      //timezone: this.dashboard.getTimezone(),
+      //panelId: this.panel.id,
+      //dashboardId: this.$scope.ctrl.dashboard.id,
+      range: range,
+      rangeRaw: range.raw,
+      interval: '5s',
+      //intervalMs: 60000,
+      //{ "refId": "B", "target": "upper_75" }
+      //targets:
+      //targets: [this.currentDatasource.queryModel.target],
+
+      maxDataPoints: 2495,
+      //scopedVars: {},
+      cacheTimeout: null,
+      format: 'json',
+    };
+
+    console.log(metricsQuery);
+
+    this.$scope.ctrl.panel.mostRecentDataTime = this.$scope.ctrl.currentDatasource.query(metricsQuery);
+
+    console.log(this.$scope.ctrl.panel.mostRecentDataTime);
+  }
+
+  datasourceChanged() {
+    return this.datasourceSrv.get(this.currentAnnotation.datasource).then(ds => {
+      this.$scope.ctrl.currentDatasource = ds;
+      this.$scope.ctrl.datasourceName = ds.name;
+      console.log(this.$scope.ctrl);
+    });
+  }
+
+  toggleOptions() {
+    this.helpOpen = false;
+    this.queryTroubleshooterOpen = false;
+    this.optionsOpen = !this.optionsOpen;
+  }
+
+  toggleQueryTroubleshooter() {
+    this.helpOpen = false;
+    this.optionsOpen = false;
+    this.queryTroubleshooterOpen = !this.queryTroubleshooterOpen;
   }
 
   onRefresh() {
@@ -145,13 +273,25 @@ export class TimePickerCtrl {
   }
 
   setRelativeFilter(timespan) {
-    const range = { from: timespan.from, to: timespan.to };
+    if (timespan.display === 'Reset') {
+      // set range to be equal to URL parameters when the page was opened.
+      let to, from;
+      to = this.startingTimeRange.to.valueOf();
+      from = this.startingTimeRange.from.valueOf();
+      this.timeSrv.setTime({ from: moment.utc(from), to: moment.utc(to) });
+    } else if (timespan.display === 'Most recent data') {
+      // set range to be the most recent data
+      //TODO: discover (in a datasource-independent way) the most recent data in the dashboard.
+    } else {
+      const range = { from: timespan.from, to: timespan.to };
 
-    if (this.panel.nowDelay && range.to === 'now') {
-      range.to = 'now-' + this.panel.nowDelay;
+      if (this.panel.nowDelay && range.to === 'now') {
+        range.to = 'now-' + this.panel.nowDelay;
+      }
+
+      this.timeSrv.setTime(range);
     }
 
-    this.timeSrv.setTime(range);
     this.closeDropdown();
   }
 }

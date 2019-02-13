@@ -25,6 +25,8 @@ const rangeOptions = [
   { from: 'now/y', to: 'now/y', display: 'This year', section: 2 },
   { from: 'now/y', to: 'now', display: 'This year so far', section: 2 },
 
+  { from: 'now-1d/d', to: 'now-1d/d', display: 'Reset', section: 1 },
+  { from: 'now-1d/d', to: 'now-1d/d', display: 'Most recent data', section: 1 },
   { from: 'now-1d/d', to: 'now-1d/d', display: 'Yesterday', section: 1 },
   {
     from: 'now-2d/d',
