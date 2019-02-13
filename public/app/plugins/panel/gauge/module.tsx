@@ -5,26 +5,22 @@ import ValueOptions from './ValueOptions';
 import GaugeOptions from './GaugeOptions';
 import Thresholds from './Thresholds';
 import ValueMappings from './ValueMappings';
-import {
-  BasicGaugeColor,
-  NullValueMode,
-  PanelOptionsProps,
-  PanelProps,
-  RangeMap,
-  Threshold,
-  ValueMap,
-} from 'app/types';
+import { PanelOptionsProps, PanelProps, NullValueMode } from '@grafana/ui';
+import { BasicGaugeColor, RangeMap, Threshold, ValueMap } from 'app/types';
 
 export interface OptionsProps {
+  baseColor: string;
   decimals: number;
+  mappings: Array<RangeMap | ValueMap>;
+  maxValue: number;
+  minValue: number;
   prefix: string;
   showThresholdLabels: boolean;
   showThresholdMarkers: boolean;
   stat: string;
   suffix: string;
-  unit: string;
   thresholds: Threshold[];
-  mappings: Array<RangeMap | ValueMap>;
+  unit: string;
 }
 
 export interface OptionModuleProps {
@@ -34,6 +30,7 @@ export interface OptionModuleProps {
 
 export const defaultProps = {
   options: {
+    baseColor: BasicGaugeColor.Green,
     minValue: 0,
     maxValue: 100,
     prefix: '',
@@ -41,13 +38,10 @@ export const defaultProps = {
     showThresholdLabels: false,
     suffix: '',
     decimals: 0,
-    stat: '',
-    unit: '',
+    stat: 'avg',
+    unit: 'none',
     mappings: [],
-    thresholds: [
-      { index: 0, label: 'Min', value: 0, canRemove: false, color: BasicGaugeColor.Green },
-      { index: 1, label: 'Max', value: 100, canRemove: false },
-    ],
+    thresholds: [],
   },
 };
 
